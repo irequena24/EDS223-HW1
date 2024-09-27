@@ -3,13 +3,6 @@ title: "Homework Assignment #1"
 subtitle: "Map making practice"
 author: "UPDATE WITH YOUR NAME"
 date: last-modified
-execute: 
-  eval: false
-format:
-  html:
-    toc: true
-editor_options: 
-  chunk_output_type: console
 ---
 
 ## Part 1: Easter Island from land to sea

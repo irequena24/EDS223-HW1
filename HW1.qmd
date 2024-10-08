@@ -1,13 +1,96 @@
 ---
 title: "Homework Assignment #1"
 subtitle: "Map making practice"
-author: "UPDATE WITH YOUR NAME"
+author: "requena"
 date: last-modified
 ---
 
 ## Part 1: Easter Island from land to sea
 
+```{r}
+
+### Load libraries
+
+library(here)
+library(tidyverse)
+library(stars)
+library(sf)
+library(tmap)
+library(viridisLite)
+```
+
+
+```{r}
+# LOAD DATA
+
+## major points on the island
+ei_points <- sf::read_sf(here::here("data/easter-island/ei_points.gpkg"))
+
+### subset points to volcanoes (from the type column, select volcanoes) 
+volcanoes <- subset(ei_points, type=="volcano")
+
+## island elevation
+ei_elev <- stars::read_stars(here::here("data", "easter-island", "ei_elev.tif"))
+
+## major points on the island
+ei_borders <- sf::read_sf(here::here("data/easter-island/ei_border.gpkg"))
+
+## island road network
+ei_roads <- sf::read_sf(here::here("data/easter-island/ei_roads.gpkg"))
+
+## bathymetry
+ei_bathymetry <- terra::rast(here::here("data/easter-island/ei_bathy.tif"))
+
+## seamounts
+ei_seamounts <- sf::read_sf(here::here("data/easter-island/ei_seamounts.gpkg"))
+
+```
+
+
+### Create a bounding box for the map to makr sure all the bathymetry and seamount data are included.
+```{r}
+# define larger plot bbox that is buffered around both of 
+# the two largest layers to display all 4 seamounts in view 
+
+bbox_seamount <- st_bbox(ei_seamounts) # seamount bounding box
+bbox_bathymetry <- st_bbox(ei_bathymetry) # bathymetry bounding box
+bbox_largest <- st_bbox(c(xmin=min(bbox_bathymetry[1], bbox_seamount[1]),
+                          ymin=min(bbox_bathymetry[2], bbox_seamount[2]),
+                          xmax=max(bbox_bathymetry[3], bbox_seamount[3]),
+                          ymax=max(bbox_bathymetry[4], bbox_seamount[4])))
+
+```
+
+
+### Create the map
+```{r}
+# Define custom breaks from -2500 meters to 500 meters (to cover both below and above sea level)
+depth_breaks <- seq(-2500, 0, by = 500)
+
+# Custom palette: from deep blue (deep water) to white (high elevation)
+custom_palette <- c("darkblue", "blue", "lightblue", "lightblue1")
+
+# Plot with layers
+tm_shape(ei_bathymetry, bbox = bbox_largest) +
+  tm_raster(palette = custom_palette, 
+            title="Elevation (mbsl)") + # Legend title with units
+tm_shape(ei_seamounts)+
+  tm_text("HEIGHT")+
+tm_shape(ei_borders)+
+  tm_fill(col="lightgreen")+
+  tm_borders(lwd=4)+
+tm_shape(ei_elev)+
+  tm_raster(style="cont", #continuous values for this layer
+            palette = "-RdYlGn", # reversed redyellowgreen continous palette. 
+            title="Elevation (masl)") + # Legend title with units
+tm_shape(ei_roads)+
+  tm_lines(col="grey")+
+tm_shape(volcanoes)+
+  tm_symbols(shape=24,
+             size="elevation",
+             title.size = "Volcanoes (masl)")+
+  tm_text("name", size=0.5)
+```
+
 
 ## Part 2: Exploring environmental (in)justice
-
-
